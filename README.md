@@ -19,7 +19,10 @@ rarity 2 → weight 1/2 = 0.50  (アンコモン)
 rarity 3 → weight 1/3 = 0.33  (レア)
 rarity 4 → weight 1/4 = 0.25  (エピック)
 rarity 5 → weight 1/5 = 0.20  (レジェンド)
-魚名rarity出現率（目安）サイズ範囲Anchovy1約 26%0.5〜2 cmBream1約 26%2〜5 cmLargemouth Bass1約 26%4〜8 cmRed Snapper1約 26%15〜20 cmTrout1約 26%5〜10 cmCarp1約 26%1〜2 cmGoldfish2約 13%0.5〜1 cmYellowfin Tuna3約 9%30〜50 cmEel4約 7%2〜3 cmWhiptail Catfish5約 5%3〜4 cm
+
+<img width="673" height="443" alt="スクリーンショット 2026-04-25 113425" src="https://github.com/user-attachments/assets/206a7c8c-f1d9-45fa-a2b0-ce5dcfb89e9a" />
+
+
 インスペクター設定
 csharp[Header("Settings")]
 public float minWaitTime   = 2f;   // ヒットまでの最小待機時間（秒）
