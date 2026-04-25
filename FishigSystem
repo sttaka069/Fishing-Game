@@ -1,0 +1,184 @@
+using UnityEngine;
+
+public class FishData
+{
+    public string name;
+    public float size;
+    public int rarity;
+
+    public FishData(string name, float size, int rarity)
+    {
+        this.name   = name;   // 修正: [this.name] → this.name
+        this.size   = size;
+        this.rarity = rarity;
+    }
+}
+
+public class FishingSystem : MonoBehaviour
+{
+    public enum FishingState
+    {
+        Idle,
+        Waiting,
+        Bite,
+        Reeling
+    }
+
+    // 追加: 魚データを FishData にまとめた配列
+    FishData[] fishDatabase = {
+        new FishData("Anchovy",          0.5f,  1),
+        new FishData("Bream",            2f,    1),
+        new FishData("Largemouth Bass",  4f,    1),
+        new FishData("Red Snapper",      15f,   1),
+        new FishData("Trout",            5f,    1),
+        new FishData("Carp",             1f,    1),
+        new FishData("Goldfish",         0.5f,  2),
+        new FishData("Yellowfin Tuna",   30f,   3),
+        new FishData("Eel",              2f,    4),
+        new FishData("Whiptail Catfish", 3f,    5),
+    };
+
+    // 追加: 今回ヒットした魚を保持
+    FishData currentFish;
+
+    public FishingState currentState = FishingState.Idle;
+    float waitTimer;
+    float biteTimer;
+    float reelProgress;
+    bool isInWaterZone = false;
+
+    [Header("Settings")]
+    public float minWaitTime   = 2f;
+    public float maxWaitTime   = 5f;
+    public float biteTimeLimit = 2f;
+    public float reelSpeed     = 0.4f;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))  // 修正: [KeyCode.Space] → KeyCode.Space
+        {
+            HandleInput();
+        }
+
+        switch (currentState)
+        {
+            case FishingState.Waiting:
+                waitTimer -= Time.deltaTime;
+                if (waitTimer <= 0)
+                {
+                    FishBite();
+                }
+                break;
+
+            case FishingState.Bite:
+                biteTimer -= Time.deltaTime;
+                if (biteTimer <= 0)
+                {
+                    FailFishing("反応が遅い！");
+                }
+                break;
+
+            case FishingState.Reeling:
+                reelProgress += reelSpeed * Time.deltaTime;
+                if (reelProgress >= 1f)
+                {
+                    SuccessFishing();
+                }
+                break;
+        }
+    }
+
+    void HandleInput()
+    {
+        switch (currentState)
+        {
+            case FishingState.Idle:
+                CastLine();
+                break;
+
+            case FishingState.Bite:
+                StartReeling();
+                break;
+
+            case FishingState.Reeling:
+                reelProgress += 0.1f;
+                Debug.Log("巻いている... " + Mathf.Clamp01(reelProgress));
+                break;
+        }
+    }
+
+    void CastLine()
+    {
+        if (!isInWaterZone)
+        {
+            Debug.Log("水辺じゃないと釣れない！");
+            return;
+        }
+        Debug.Log("キャスト！");
+        currentState = FishingState.Waiting;
+        waitTimer = Random.Range(minWaitTime, maxWaitTime);
+    }
+
+    void FishBite()
+    {
+        currentFish = PickFish();  // 追加: ヒット時に魚を抽選
+        Debug.Log("ヒット！スペースを押せ！（" + currentFish.name + "）");
+        currentState = FishingState.Bite;
+        biteTimer = biteTimeLimit;
+    }
+
+    void StartReeling()
+    {
+        Debug.Log("巻き開始！");
+        currentState = FishingState.Reeling;
+        reelProgress = 0f;
+    }
+
+    void SuccessFishing()
+    {
+        // 修正: 釣れた魚の名前・サイズを表示
+        float size = Random.Range(currentFish.size, currentFish.size * 2f);
+        Debug.Log("魚ゲット！ " + currentFish.name + "  " + size.ToString("F1") + " cm  (★" + currentFish.rarity + ")");
+        currentState = FishingState.Idle;
+    }
+
+    void FailFishing(string reason)
+    {
+        Debug.Log("失敗: " + reason);
+        currentState = FishingState.Idle;
+    }
+
+    // 追加: レアリティ加重抽選
+    FishData PickFish()
+    {
+        float total = 0f;
+        foreach (var f in fishDatabase) total += 1f / f.rarity;
+
+        float roll = Random.Range(0f, total);
+        float sum  = 0f;
+        foreach (var f in fishDatabase)
+        {
+            sum += 1f / f.rarity;
+            if (roll <= sum) return f;
+        }
+        return fishDatabase[0];
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Water"))
+        {
+            isInWaterZone = true;
+            Debug.Log("水辺に入った");
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Water"))
+        {
+            isInWaterZone = false;
+            Debug.Log("水辺から離れた");
+        }
+    }
+}
